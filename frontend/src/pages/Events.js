@@ -3,12 +3,16 @@ import './Events.css'
 import Modal from '../components/Modal/Modal'
 import Backdrop from '../components/Backdrop/Backdrop'
 import AuthContext from '../context/auth-context'
+import EventsList from '../components/Events/EventsList/EventList'
+import Spinner from '../components/Spinner/Spinner'
 
 class Events extends Component {
 
     state = {
         modalOpen: false,
-        events: []
+        events: [],
+        isLoading: false, 
+        showedDetails: null
     }
 
     static contextType = AuthContext
@@ -32,14 +36,24 @@ class Events extends Component {
 
       modalClose = () => {
         this.setState({
-          modalOpen: false
+          modalOpen: false,
+          showedDetails: null
         })
   };
 
+  showDetails = (eventId ) => {
+    console.log(this.state.showedDetails)
+    this.setState(prevState => {
+      const showedDetails = prevState.events.find(e => e._id === eventId)
+      return {showedDetails: showedDetails}
+    })
+  }
   modalConfirmeHandler = () => {
     this.setState({
       modalOpen: false
     })
+
+  
 
     let title = this.titleRef.current.value
     let price = +this.priceRef.current.value
@@ -62,10 +76,6 @@ class Events extends Component {
               description
               date
               price
-              creator {
-                _id
-                email
-              }
             }
           }
         `
@@ -88,7 +98,21 @@ class Events extends Component {
         return res.json();
       })
       .then(resData => {
-     this.fetchEvents()
+    this.setState(prevState => {
+     const updatedEvents = [...prevState.events]
+     console.log(resData)
+     updatedEvents.push({
+       _id: resData.data.createEvent._id,
+       title: resData.data.createEvent.title,
+       description: resData.data.createEvent.description,
+       date: resData.data.createEvent.date,
+       price: resData.data.createEvent.price,
+       creator: {
+         _id: this.context.userId
+       }
+     });
+     return {events: updatedEvents}
+    })
       })
       .catch(err => {
         console.log(err);
@@ -96,6 +120,10 @@ class Events extends Component {
   };
 
   fetchEvents = () => {
+
+    this.setState({
+      isLoading: true
+    })
 
     const requestBody = {
       query: `
@@ -132,12 +160,17 @@ class Events extends Component {
       })
       .then(resData => {
     const events = resData.data.events
+    console.log(resData)
     this.setState({
-      events
+      events,
+      isLoading:false
     })
       })
       .catch(err => {
         console.log(err);
+       this.setState({
+        isLoading:false
+       })
       });
   };
 
@@ -147,9 +180,7 @@ class Events extends Component {
 
     render () {
 
-      const listOfEvenets = this.state.events.map(event => {
-        return  <li key={event._id} className='events_list_item'> {event.title} </li>
-      })
+     
         return (
             <React.Fragment > 
             {this.state.modalOpen ? ( 
@@ -179,15 +210,28 @@ class Events extends Component {
                   <textarea id='description' rows='4' ref={this.descriptionRef}/>   </div>
                 </form> 
             </Modal> </React.Fragment>) : null}
+            {this.state.showedDetails ?   
+            <Modal 
+                title={this.state.showedDetails.title}
+                canCancel 
+                canConfirm 
+                closed={this.modalClose} 
+                onConfirm={this.modalConfirmeHandler}> 
+            <h1>{this.state.showedDetails.title}</h1>
+            <p>{this.state.showedDetails.description}</p>
+            </Modal> : null}
       {this.context.token ?  <div className='events'>
             <h1>Events </h1>
             <button onClick = {this.modalOpen}> Create Events</button>
         </div> : null }
 
-        <ul className='events_list'> 
-         {listOfEvenets} 
-          </ul> 
-       
+       {this.state.isLoading ? 
+         <Spinner />
+        : <EventsList
+         events={this.state.events}
+         userId= {this.context.userId}
+         showDetails={this.showDetails}/> }
+
         </React.Fragment>
         )
     }

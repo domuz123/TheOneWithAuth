@@ -1,0 +1,19 @@
+.events_list_item {
+    margin: 1rem 0;
+    padding: 1rem;
+    border: 1px solid #01d1d1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+
+  .events_list_item h1{
+      color: #01d1d1;
+      font-size: 1.5rem;
+      margin: 0
+  }
+
+  .events_list_item p {
+      margin:0 
+  }

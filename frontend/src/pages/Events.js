@@ -236,7 +236,7 @@ class Events extends Component {
             {this.state.modalOpen ? ( 
               <React.Fragment >  
               <Backdrop />
-             <Modal canCancel canConfirm closed={this.modalClose} onConfirm={this.modalConfirmeHandler}> 
+             <Modal confirmText={this.context.token ? 'Book' : 'Confirm'} canCancel canConfirm closed={this.modalClose} onConfirm={this.modalConfirmeHandler}> 
              <form>
                 <div className='form-control'>
                   <label htmlFor ='title' > Title</label> 
@@ -267,7 +267,7 @@ class Events extends Component {
                 canConfirm 
                 closed={this.modalClose} 
                 onConfirm={this.bookEventHandler}
-                confirmText={this.context.token ? 'Book' : 'Confrim'}> 
+                confirmText={this.context.token ? 'Book' : 'Confirm'}> 
               
             <h1>{this.state.showedDetails.title}</h1>
             <p>{this.state.showedDetails.description}</p>

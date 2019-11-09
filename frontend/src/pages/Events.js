@@ -15,6 +15,8 @@ class Events extends Component {
         showedDetails: null
     }
 
+    isActive = true; 
+
     static contextType = AuthContext
 
     constructor(props){
@@ -52,9 +54,7 @@ class Events extends Component {
     this.setState({
       modalOpen: false
     })
-
-  
-
+   
     let title = this.titleRef.current.value
     let price = +this.priceRef.current.value
     let description = this.descriptionRef.current.value
@@ -119,6 +119,46 @@ class Events extends Component {
       });
   };
 
+  bookEventHandler = () => {
+    if (!this.context.token) {
+      this.setState({ showedDetails: null });
+      return;
+    }
+    const requestBody = {
+      query: `
+          mutation {
+            bookEvent(eventId: "${this.state.showedDetails._id}") {
+              _id
+             createdAt
+             updatedAt
+            }
+          }
+        `
+    };
+
+    fetch('http://localhost:8000/graphql', {
+      method: 'POST',
+      body: JSON.stringify(requestBody),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + this.context.token
+      }
+    })
+      .then(res => {
+        if (res.status !== 200 && res.status !== 201) {
+          throw new Error('Failed!');
+        }
+        return res.json();
+      })
+      .then(resData => {
+        console.log(resData);
+        this.setState({ showedDetails: null });
+      })
+      .catch(err => {
+        console.log(err);
+      });
+  }
+
   fetchEvents = () => {
 
     this.setState({
@@ -159,20 +199,30 @@ class Events extends Component {
         return res.json();
       })
       .then(resData => {
+       
     const events = resData.data.events
-    console.log(resData)
-    this.setState({
-      events,
-      isLoading:false
-    })
+    if(this.isActive) {
+      this.setState({
+        events,
+        isLoading:false
+      })
+    }
+   
       })
       .catch(err => {
         console.log(err);
-       this.setState({
-        isLoading:false
-       })
+        if(this.isActive) {
+          this.setState({
+            isLoading:false
+           })
+        }
+     
       });
   };
+
+  componentWillUnmount() {
+  this.isActive = false
+  }
 
   
 
@@ -216,7 +266,9 @@ class Events extends Component {
                 canCancel 
                 canConfirm 
                 closed={this.modalClose} 
-                onConfirm={this.modalConfirmeHandler}> 
+                onConfirm={this.bookEventHandler}
+                confirmText={this.context.token ? 'Book' : 'Confrim'}> 
+              
             <h1>{this.state.showedDetails.title}</h1>
             <p>{this.state.showedDetails.description}</p>
             </Modal> : null}
